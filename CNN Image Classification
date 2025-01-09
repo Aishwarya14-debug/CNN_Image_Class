@@ -1,0 +1,92 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn
+from keras.datasets import cifar10
+(X_train, y_train), (X_test, y_test) = cifar10.load_data()
+X_train.shape
+X_test.shape
+y_train.shape
+y_test.shape
+
+W_grid = 15
+L_grid = 15
+
+fig, axes = plt.subplots(L_grid, W_grid, figsize = (25,25))
+axes = axes.ravel()
+
+n_training = len(X_train)
+
+for i in np.arange(0, L_grid * W_grid):
+    index = np.random.randint(0, n_training) # pick a random number
+    axes[i].imshow(X_train[index])
+    axes[i].set_title(y_train[index])
+    axes[i].axis('off')
+    
+plt.subplots_adjust(hspace = 0.4)
+
+import keras
+y_train = keras.utils.to_categorical(y_train, number_cat)
+y_test = keras.utils.to_categorical(y_test, number_cat)
+
+from keras.models import Sequential
+from keras.layers import Conv2D, MaxPooling2D, AveragePooling2D, Flatten, Dense, Dropout
+from keras.optimizers import Adam
+from keras.callbacks import TensorBoard
+
+
+cnn_model = Sequential()
+cnn_model.add(Conv2D(filters = 32, kernel_size = (3,3), activation = 'relu', input_shape = Input_shape))
+cnn_model.add(Conv2D(filters = 32, kernel_size = (3,3), activation = 'relu'))
+cnn_model.add(MaxPooling2D(pool_size = (2,2)))
+cnn_model.add(Dropout(0.3))
+
+cnn_model.add(Conv2D(filters = 64, kernel_size = (3,3), activation = 'relu'))
+cnn_model.add(Conv2D(filters = 64, kernel_size = (3,3), activation = 'relu'))
+cnn_model.add(MaxPooling2D(pool_size = (2,2)))
+cnn_model.add(Dropout(0.2))
+
+cnn_model.add(Flatten())
+
+cnn_model.add(Dense(units = 512, activation = 'relu'))
+
+cnn_model.add(Dense(units = 512, activation = 'relu'))
+
+cnn_model.add(Dense(units = 10, activation = 'softmax'))
+
+cnn_model.compile(loss = 'categorical_crossentropy', optimizer = keras.optimizers.rmsprop(lr = 0.001), metrics = ['accuracy'])
+history = cnn_model.fit(X_train, y_train, batch_size = 32, epochs = 2, shuffle = True)
+
+evaluation = cnn_model.evaluate(X_test, y_test)
+print('Test Accuracy: {}'.format(evaluation[1]))
+
+predicted_probabilities = cnn_model.predict(X_test)
+predicted_classes = np.argmax(predicted_probabilities, axis=1)
+
+L = 7
+W = 7
+fig, axes = plt.subplots(L, W, figsize = (12,12))
+axes = axes.ravel() 
+
+for i in np.arange  (0, L * W):
+    axes[i].imshow(X_test[i])
+    axes[i].set_title('Prediction = {}\n True = {}'.format(predicted_classes[i], y_test[i]))
+    axes[i].axis('off')
+plt.subplots_adjust(wspace = 1)    
+
+
+from sklearn.metrics import confusion_matrix
+import seaborn as sns
+
+cm = confusion_matrix(y_test, predicted_classes)
+cm
+plt.figure(figsize = (10,10))
+sns.heatmap(cm, annot = True)
+
+import os
+directory = os.path.join(os.getcwd(), 'saved_models')
+
+if not os.path.isdir(directory):
+    os.makedirs(directory)
+model_path = os.path.join(directory, 'keras_cifar10_trained_model.h5')
+cnn_model.save(model_path)
